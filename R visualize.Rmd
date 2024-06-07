@@ -1,0 +1,125 @@
+---
+title: "UAS_EVD"
+author: "Rashiqa Dewi N"
+date: "2023-12-19"
+output: html_document
+---
+
+### Import Data
+
+```{r}
+setwd("C:/kuliah/SMT 3/EVD")
+
+# Jika data dipisahkan oleh tab
+df <- read.csv("preferensi_tsd.csv", header = TRUE, sep = ";")
+head(df)
+
+```
+
+### Mengecek Missing Value
+
+```{r}
+library(visdat)
+vis_miss(df)
+```
+
+*Interpretasi* Tidak adanya missing value
+
+### Mengecek Tipe Data Tiap Atribut dean mengembalikannya ke nilai awal
+
+```{r}
+str(df)
+```
+
+```{r}
+df$Pengeluaran <- gsub("\\.", "", df$Pengeluaran)
+df$Pengeluaran <- as.numeric(df$Pengeluaran)
+head(df)
+```
+
+```{r}
+df$Skala <- gsub("\\(.*?\\)", "", df$Skala)
+df$Skala <- as.numeric(df$Skala)
+# Menampilkan hasil
+head(df)
+```
+
+```{r}
+str(df)
+```
+
+*Interpretasi* Kini tipe data sudah sesuai
+
+```{r}
+summary(df)
+
+```
+
+## EDA
+
+```{r}
+#Library
+library(ggplot2)
+library(ggthemes)
+library(corrplot)
+library(reshape2)
+library(dplyr)
+```
+
+### Gender
+
+#### Histogram
+
+```{r}
+ggplot(df, aes(x=Gender)) + geom_bar(fill = "cornflowerblue", color="black") +
+  labs(x ="Gender", y ="Frequency", title = "Respondents by Gender")
+```
+
+
+### Alasan
+#### Bar chart
+```{r}
+ggplot(df, aes(x=Alasan)) + geom_bar(fill = "wheat", color="black") +
+  labs(x ="Alasan", y ="Frequency", title = "Distribusi Alasan Para Responden")
+```
+### Makanan
+```{r}
+makanan_pisah <- unlist(strsplit(df$Makanan, ", "))
+frekuensi_makanan <- table(makanan_pisah)
+df_makanan <- as.data.frame(frekuensi_makanan)
+print(df_makanan)
+```
+#### Barchart
+```{r}
+ggplot(df_makanan, aes(x = makanan_pisah, y = Freq)) +
+  geom_bar(stat = "identity", fill = "cornflowerblue", color = "black") +
+  labs(x = "Makanan", y = "Frekuensi", title = "Frekuensi Makanan") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+### BoxPlot
+```{r}
+par(mfrow=c(1,3))
+for(i in 6:8) {boxplot(df[,i], main=names(df)[i])}
+```
+
+```{r}
+# Fungsi untuk mengganti outlier dengan median
+replace_outliers_with_median <- function(data_vector, multiplier = 1.5) {
+  # Hitung nilai batas atas dan batas bawah
+  q1 <- quantile(data_vector, 0.25)
+  q3 <- quantile(data_vector, 0.75)
+  iqr <- q3 - q1
+  lower_bound <- q1 - multiplier * iqr
+  upper_bound <- q3 + multiplier * iqr
+  
+  # Identifikasi dan ganti outlier dengan median
+  data_vector[data_vector < lower_bound | data_vector > upper_bound] <- median(data_vector, na.rm = TRUE)
+  
+  return(data_vector)
+}
+
+# Contoh penggunaan
+df$Pengeluaran <- replace_outliers_with_median(df$Pengeluaran)
+```
+
+
